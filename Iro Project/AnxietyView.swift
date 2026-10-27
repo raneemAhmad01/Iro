@@ -126,28 +126,6 @@ struct AnxietyView: View {
     
     var body: some View {
         ZStack {
-            // Base clean background
-          
-            // Top-left warm/yellow ambient glow
-            Circle()
-                .fill(Color.yellow.opacity(0.25))
-                .frame(width: 300, height: 300)
-                .blur(radius: 60)
-                .position(x: 50, y: 50)
-            
-            // Top-left soft blue ambient glow
-            Circle()
-                .fill(Color.blue.opacity(0.2))
-                .frame(width: 380, height: 380)
-                .blur(radius: 70)
-                .position(x: 200, y: 20)
-            
-            // Bottom-right soft blue ambient glow
-            Circle()
-                .fill(Color.blue.opacity(0.2))
-                .frame(width: 400, height: 600)
-                .blur(radius: 70)
-                .position(x: 1300, y: 900)
             
             VStack(spacing: 0) {
                 Spacer()
