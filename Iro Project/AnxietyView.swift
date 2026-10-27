@@ -15,9 +15,7 @@ struct AnxietyView: View {
         
         ZStack {
             // Base clean background
-            Color(.systemBackground)
-                .ignoresSafeArea()
-            
+          
             // Top-left warm/yellow ambient glow
             Circle()
                 .fill(Color.yellow.opacity(0.25))
