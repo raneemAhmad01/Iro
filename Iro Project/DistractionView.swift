@@ -9,7 +9,8 @@ import SwiftUI
 
 struct DistractionView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        // The memory matching card game (in the MemoryGame folder).
+        MemoryGameView()
     }
 }
 
