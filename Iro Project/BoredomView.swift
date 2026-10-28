@@ -8,8 +8,13 @@
 import SwiftUI
 
 struct BoredomView: View {
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        // Petal Drift mini game; its X button returns to the page that opened this one
+        PetalDriftGameView(onClose: { dismiss() })
+            .statusBarHidden()
+            .toolbar(.hidden, for: .navigationBar)
     }
 }
 
