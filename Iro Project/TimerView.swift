@@ -10,6 +10,11 @@
 //  Focus Timer — SwiftUI (iPad / iOS 17+، وLiquid Glass على iOS 26 مع Xcode 26)
 //
 
+//
+//  TimerView.swift
+//  Focus Timer — SwiftUI (iPad / iOS 17+، وLiquid Glass على iOS 26 مع Xcode 26)
+//
+
 import SwiftUI
 import Combine
 import AVFoundation
@@ -117,7 +122,7 @@ final class FocusTimerModel: ObservableObject {
     @Published var focusDone: Bool = false   // تشيك التركيز
     @Published var breakDone: Bool = false   // تشيك البريك
 
-    let totalSessions: Int = 4
+    @Published var totalSessions: Int = 10   // مجموع الجلسات (يختاره المستخدم)
 
     private var segments: [TimerSegment] = []
     private var segmentIndex: Int = 0
@@ -130,7 +135,7 @@ final class FocusTimerModel: ObservableObject {
     var title: String {
         switch phase {
         case .idle:
-            return justFinished ? "Session complete" : "Are ready to start the focus?"
+            return justFinished ? "Session complete" : "it's Rio time let's begin....."
         case .focus:
             return "Focus started"
         case .rest:
@@ -163,6 +168,28 @@ final class FocusTimerModel: ObservableObject {
     // كم تشيك انجز من اثنين (التركيز + البريك)
     var completedCount: Int {
         return (focusDone ? 1 : 0) + (breakDone ? 1 : 0)
+    }
+
+    // الوقت الكلي لإنهاء كل الجلسات (التركيز + البريك لكل جلسة)
+    var totalMinutes: Int {
+        return totalSessions * (focusMinutes + breakMinutes)
+    }
+
+    var totalTimeString: String {
+        return FocusTimerModel.formatTime(minutes: totalMinutes)
+    }
+
+    // تنسيق الدقائق إلى ساعات ودقائق (مثل 2h 45m)
+    static func formatTime(minutes total: Int) -> String {
+        let hours: Int = total / 60
+        let minutes: Int = total % 60
+        if hours > 0 && minutes > 0 {
+            return "\(hours)h \(minutes)m"
+        } else if hours > 0 {
+            return "\(hours)h"
+        } else {
+            return "\(minutes)m"
+        }
     }
 
     var presetName: String {
@@ -225,9 +252,11 @@ final class FocusTimerModel: ObservableObject {
         breakDone = false
     }
 
-    func apply(focus: Int, rest: Int) {
+    func apply(focus: Int, rest: Int, sessions: Int) {
         focusMinutes = focus
         breakMinutes = rest
+        totalSessions = max(1, sessions)
+        session = min(session, totalSessions)
         reset()
     }
 
@@ -629,7 +658,7 @@ struct FocusSessionCard: View {
                 .buttonStyle(.plain)
             }
 
-            Text("\(model.focusMinutes) Min focus . \(model.breakMinutes) Min break")
+            Text("Total time . \(model.totalTimeString)")
                 .font(.system(size: 17))
                 .foregroundStyle(.secondary)
 
@@ -720,12 +749,23 @@ struct SettingRow: View {
     let value: String
     let onMinus: () -> Void
     let onPlus: () -> Void
+    var caption: String? = nil
 
     var body: some View {
         HStack {
-            Text(title)
-                .font(.system(size: 22))
-                .frame(width: 170, alignment: .leading)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 22))
+                if let caption = caption {
+                    Text(caption)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .animation(.snappy(duration: 0.15), value: caption)
+                }
+            }
+            .frame(width: 170, alignment: .leading)
             Spacer()
             Text(value)
                 .font(.system(size: 22, weight: .medium))
@@ -782,18 +822,20 @@ struct EditSheet: View {
 
     @State private var focus: Int
     @State private var rest: Int
+    @State private var sessions: Int
 
     init(model: FocusTimerModel) {
         self.model = model
         _focus = State(initialValue: model.focusMinutes)
         _rest = State(initialValue: model.breakMinutes)
+        _sessions = State(initialValue: model.totalSessions)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 26) {
             header
 
-            Text("Edit")
+            Text("Edit Stady time")
                 .font(.system(size: 28, weight: .semibold))
                 .padding(.leading, 12)
 
@@ -831,6 +873,14 @@ struct EditSheet: View {
         rest = min(60, rest + 1)
     }
 
+    private func decreaseSessions() {
+        sessions = max(1, sessions - 1)
+    }
+
+    private func increaseSessions() {
+        sessions = min(10, sessions + 1)
+    }
+
     // MARK: Parts
 
     private var header: some View {
@@ -849,7 +899,7 @@ struct EditSheet: View {
             Spacer()
 
             Button {
-                model.apply(focus: focus, rest: rest)
+                model.apply(focus: focus, rest: rest, sessions: sessions)
                 dismiss()
             } label: {
                 Image(systemName: "checkmark")
@@ -878,6 +928,16 @@ struct EditSheet: View {
                 value: "\(rest) Min",
                 onMinus: { decreaseRest() },
                 onPlus: { increaseRest() }
+            )
+
+            Divider()
+
+            SettingRow(
+                title: "Sessions",
+                value: "\(sessions)",
+                onMinus: { decreaseSessions() },
+                onPlus: { increaseSessions() },
+                caption: "Total time . \(FocusTimerModel.formatTime(minutes: sessions * (focus + rest)))"
             )
 
         }
@@ -1016,10 +1076,7 @@ struct TimerView: View {
 
     private var headerTexts: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Timer")
-                .font(.system(size: 44, weight: .semibold))
-
-            Spacer().frame(height: 70)
+            Spacer().frame(height: 114)
 
             VStack(alignment: .leading, spacing: 10) {
                 Text(model.title)
